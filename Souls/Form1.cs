@@ -64,7 +64,7 @@ namespace Souls
 
         private IntPtr playerStats()
         {
-            int lvl1 = 0x01004698;
+            int lvl1 = 0x01028F58;
             int lvl2 = 0x388;
 
 
