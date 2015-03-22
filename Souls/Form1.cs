@@ -36,63 +36,48 @@ namespace Souls
             Update();
         }
 
-        private IntPtr darksoulsHandle, baseAddress;
-        private int pid;
-        private Process darksoulsProcess;
+        private IntPtr darksoulsHandle, DarkSoulsII;
         private byte[] currentSouls = new byte[4];
-
-        [StructLayout(LayoutKind.Explicit)]
-        public struct Offset
-        {
-            [FieldOffset(0xE8)]
-            public int souls;
-        }
-
-        Offset offset = new Offset();
 
         private void Update()
         {
-            darksoulsProcess = Process.GetProcessesByName("DarkSoulsII").FirstOrDefault();
-            pid = darksoulsProcess.Id;
+            var darksoulsProcess = Process.GetProcessesByName("DarkSoulsII").FirstOrDefault();
+            int pid = darksoulsProcess.Id;
             darksoulsHandle = OpenProcess(PROCESS_ALL_ACCESS, false, pid);
-            baseAddress = darksoulsProcess.MainModule.BaseAddress;
-
-            ReadSouls(darksoulsHandle, playerStats() + 0xE8, currentSouls);
-
-            textBox1.Text = BitConverter.ToInt32(currentSouls, 0).ToString();
+            DarkSoulsII = darksoulsProcess.MainModule.BaseAddress;
+            ReadSouls(darksoulsHandle, playerSouls() + 0xe8, currentSouls);
+            textBoxSouls.Text = BitConverter.ToInt32(currentSouls, 0).ToString();
         }
 
-        private IntPtr playerStats()
+        private IntPtr playerSouls()
         {
-            int lvl1 = 0x01028F58;
-            int lvl2 = 0x388;
-
+            int offset1 = 0x011593F4;
+            int offset2 = 0x74;
+            int offset3 = 0x378;
 
             var _buffer = new byte[4];
-
-            ReadSouls(darksoulsHandle, baseAddress + lvl1, _buffer);
-            ReadSouls(darksoulsHandle, (IntPtr)BitConverter.ToInt32(_buffer, 0) + lvl2, _buffer);
-
+            ReadSouls(darksoulsHandle, DarkSoulsII + offset1, _buffer);
+            ReadSouls(darksoulsHandle, (IntPtr)BitConverter.ToInt32(_buffer, 0) + offset2, _buffer);
+            ReadSouls(darksoulsHandle, (IntPtr)BitConverter.ToInt32(_buffer, 0) + offset3, _buffer);
             return (IntPtr)BitConverter.ToInt32(_buffer, 0);
         }
 
         private static bool WriteSouls(IntPtr pHandle, IntPtr lpAddress, int lpBuffer)
         {
             var write = BitConverter.GetBytes(lpBuffer);
-
-            IntPtr _written = new IntPtr(0);
+            var _written = new IntPtr(0);
             return WriteProcessMemory(pHandle, lpAddress, write, (uint)write.Length, ref _written);
         }
 
         private static bool ReadSouls(IntPtr pHandle, IntPtr lpAddress, byte[] lpBuffer)
         {
-            IntPtr _read = new IntPtr(0);
+            var _read = new IntPtr(0);
             return ReadProcessMemory(pHandle, lpAddress, lpBuffer, (uint)lpBuffer.Length, ref _read);
         }
 
         private void button_plus5k_Click(object sender, EventArgs e)
         {
-            WriteSouls(darksoulsHandle, playerStats() + 0xE8, BitConverter.ToInt32(currentSouls, 0) + 5000);
+            WriteSouls(darksoulsHandle, playerSouls() + 0xe8, BitConverter.ToInt32(currentSouls, 0) + 5000);
             Update();
         }
     }
